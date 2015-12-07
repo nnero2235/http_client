@@ -6,10 +6,11 @@
 // DESC: 测试用例
 //
 #include <stdio.h>
+#include <stdlib.h>
 #include "http.h"
 
 struct request_param * create_param(char *name,char *value){
-    struct request_param *param;
+    struct request_param *param = malloc(sizeof(struct request_param));
     param->name = name;
     param->value = value;
     return param;

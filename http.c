@@ -35,20 +35,26 @@ char *connection_state[] ={
 static size_t set_param_str(char *param_str,struct request_param *params){
     size_t param_len = 0;
     size_t param_index=0;
+    param_str[param_index] = PARAM_SPLIT;
+    param_index++;
     while(params){
         //解析name
         param_len = strlen(params->name);
         strncpy(&param_str[param_index],params->name,param_len);
         param_index += param_len;
         //添加=号
-        param_str[++param_index] = PARAM_EQUAL;
+        param_str[param_index] = PARAM_EQUAL;
+        param_index++;
         //解析value
         param_len = strlen(params->value);
         strncpy(&param_str[param_index],params->value,param_len);
         param_index += param_len;
         //调整指针
         params = params->next;
-        if(params) param_str[++param_index] = PARAM_AND;
+        if(params) {
+            param_str[param_index] = PARAM_AND;
+            param_index++;
+        }
     }
     param_str[++param_index] = '\0';
     printf("param_str: %s\n",param_str);
