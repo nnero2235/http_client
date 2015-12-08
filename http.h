@@ -13,12 +13,20 @@
 #define PARAM_AND '&'
 #define PARAM_EQUAL '='
 
+//response headers index
+#define RESPONSE_SERVER 0
+#define RESPONSE_DATE 1
+#define RESPONSE_CONTENT_TYPE 2
+#define RESPONSE_CONTENT_LENGTH 3
+
+//state_code
 #define OK 200
 #define REDIRECT 302
 #define FORWARD 304
 #define NOT_FOUND 404
 #define SERVER_ERROR 500
 
+//mime_type index
 #define HTML 0
 #define XML 1
 #define TEXT 2
@@ -29,6 +37,14 @@
 #define PNG 7
 #define MPEG 8
 
+//request_headers index
+#define REQUEST_DATE 0
+#define REQUEST_ACCEPT 1
+#define REQUEST_ACCEPT_LANGUAGE 2
+#define REQUEST_HOST 3
+#define REQUEST_USER_AGENT 4
+#define REQUEST_ACCEPT_ENCODING 5
+
 #define CHINESE 0
 
 
@@ -37,6 +53,10 @@ extern char *mime_type[];
 extern char *language[];
 
 extern char *connection_state[];
+
+extern char *request_header_names[];
+
+extern char *response_header_names[];
 
 enum REQUEST_TYPE{
     GET,
@@ -60,7 +80,7 @@ username=jinqiao&password=1234
 struct http_request{
     enum REQUEST_TYPE type;
     char *request_line;
-    struct request_headers *headers;
+    struct request_header *headers;
     struct request_param *params; /*遍历链表即可获得 所有param*/
     char *entity; /*主要是POST请求参数 暂时不能传文件*/
 };
@@ -78,7 +98,7 @@ struct http_response{
     char *server;
     char *date;
     char *content_type;
-    char *content_length;
+    int content_length;
     char *entity; /*暂时只支持文本*/
 };
 
@@ -89,22 +109,12 @@ struct request_param{
     struct request_param *next;
 };
 
-struct request_headers{
-    char *date;
-    char *accept;
-    char *accept_language;
-    char *connection_state;
-    char *accept_encoding;
-    char *user_agent;
-    char *host;
+struct request_header{
+    char *name;
+    char *value;
+    struct request_header *next;
 };
 
 char* get_current_time();//获取当前时间
-
-int make_client_socket(char *host,int port);/*返回-1 表示错误 正确返回sock_id*/
-
-char * make_http_request(struct http_request *request); /*将request 转为string*/
-
-struct http_response * parse_http_response(char *response_str);/*将string response 转为结构*/
 
 #endif //HTTP_CLIENT_HTTP_H
