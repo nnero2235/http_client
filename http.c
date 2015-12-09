@@ -32,12 +32,13 @@ char *connection_state[] ={
 };
 
 char *request_header_names[]={
-        "Date:",
-        "Accept:",
-        "Accept-Language:",
-        "Host:",
-        "User-Agent:",
-        "Accept-encoding:"
+        "Date",
+        "Accept",
+        "Accept-Language",
+        "Connection",
+        "Host",
+        "User-Agent",
+        "Accept-encoding"
 };
 
 char *response_header_names[]={
@@ -49,7 +50,9 @@ char *response_header_names[]={
 
 char* get_current_time(){
     time_t time_long = time(NULL);
-    return ctime(&time_long);
+    char *time = ctime(&time_long);
+    time[strlen(time)-1] = '\0'; //去掉换行符
+    return time;
 }
 
 

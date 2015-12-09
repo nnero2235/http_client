@@ -41,11 +41,17 @@
 #define REQUEST_DATE 0
 #define REQUEST_ACCEPT 1
 #define REQUEST_ACCEPT_LANGUAGE 2
-#define REQUEST_HOST 3
-#define REQUEST_USER_AGENT 4
-#define REQUEST_ACCEPT_ENCODING 5
+#define REQUEST_CONNECTION 3
+#define REQUEST_HOST 4
+#define REQUEST_USER_AGENT 5
+#define REQUEST_ACCEPT_ENCODING 6
 
+//language
 #define CHINESE 0
+
+//connect state
+#define CONNECT_ALIVE 0
+#define CONNECT_CLOSE 1
 
 
 extern char *mime_type[];
@@ -58,11 +64,11 @@ extern char *request_header_names[];
 
 extern char *response_header_names[];
 
-enum REQUEST_TYPE{
+typedef enum REQUEST_TYPE{
     GET,
     POST,
     PUT
-};
+}Request_type;
 
 /*
  GET/sample.jsp HTTP/1.1

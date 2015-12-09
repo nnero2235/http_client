@@ -15,22 +15,29 @@ size_t strncpy_index(char *src,size_t index,char *desc,size_t len){
     return index+len;
 }
 
-char ** spilt_str_by_char(char *str,char symbol){
+char ** split_str_by_char(char *str,char symbol){
     int index = 0;
+    int start = 0;
+    int end = 0;
     size_t len = strlen(str);
     for(int i=0;i<len;i++){
         if(str[i] == symbol){
-            str[i] = '\0';
-            char *s = malloc(strlen(str) * sizeof(char));
-            strncpy(s,str,strlen(str));
-            str[i] = symbol;
+            end = i;
+            char *s = malloc((end-start) * sizeof(char));
+            strncpy(s,&str[start],(end-start));
             strs_buffer[index++] = s;
+            start = i+1;
         }
     }
-    strs_buffer[index] = NULL;
+    //追加最后一个字符串
+    char *s = malloc((len-start) * sizeof(char));
+    strncpy(s,&str[start],(len-start));
+    strs_buffer[index++] = s;
+
     char **strs = malloc(index * sizeof(char *));
     for(int i=0;i<index;i++){
-        *strs[i] = *strs_buffer[i];
+        strs[i] = strs_buffer[i];
     }
+    strs[index] = NULL;
     return strs;
 }
