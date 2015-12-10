@@ -85,7 +85,9 @@ username=jinqiao&password=1234
 
 struct http_request{
     enum REQUEST_TYPE type;
-    char *request_line;
+    int port;
+    char *host;
+    char *path;
     struct request_header *headers;
     struct request_param *params; /*遍历链表即可获得 所有param*/
     char *entity; /*主要是POST请求参数 暂时不能传文件*/

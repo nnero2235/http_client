@@ -49,8 +49,8 @@ static size_t build_params(char *str,size_t str_index,struct request_param *para
 static size_t build_request_line(char *str,struct http_request *request){
     size_t str_index=0;
 
-    str_index = strncpy_index(str,str_index,"GET/",4);
-    str_index = strncpy_index(str,str_index,request->request_line,strlen(request->request_line));
+    str_index = strncpy_index(str,str_index,"GET",3);
+    str_index = strncpy_index(str,str_index,request->path,strlen(request->path));
 
     str_index = build_params(str,str_index,request->params);
 
@@ -150,7 +150,6 @@ struct http_response * parse_http_response(char *response){
     char **temp = split_entity_and_headers(response);
     char *headers = temp[0];
     char *entity = temp[1];
-    printf("%s\n",entity);
     char **strs = split_str_by_char(headers,'\n');
     char **strs_temp;
     int index = 1; //从第二行开始解析
@@ -162,7 +161,6 @@ struct http_response * parse_http_response(char *response){
     state_code[3] = '\0';
     http_rep->state_code = atoi(state_code);
 
-    printf("code:%d\n",http_rep->state_code);
     while(strs[index]){
         strs_temp = split_str_by_char(strs[index],':');
 
@@ -211,8 +209,22 @@ int get_client_socket(char *host,int port){
 
 Request create_request(Request_type type,char *url){
     Request request = malloc(sizeof(struct http_request));
+    char **temp = check_url(url);
+    printf("%s\n",temp[0]);
+    printf("%s\n",temp[1]);
     request->type = type;
+    request->host = temp[0];
+    request->path = temp[1];
+    request->port = get_port(request->host);
+    add_header(request,request_header_names[REQUEST_DATE],get_current_time());
+    add_header(request,request_header_names[REQUEST_ACCEPT],mime_type[JSON]);
+    add_header(request,request_header_names[REQUEST_ACCEPT_LANGUAGE],language[CHINESE]);
+    add_header(request,request_header_names[REQUEST_CONNECTION],connection_state[CONNECT_ALIVE]);
+    add_header(request,request_header_names[REQUEST_HOST],"NNERO.mac");
+    add_header(request,request_header_names[REQUEST_USER_AGENT],"CLIENT 1.0.0");
+    add_header(request,request_header_names[REQUEST_ACCEPT_ENCODING],"gzip");
 
+    return request;
 }
 
 

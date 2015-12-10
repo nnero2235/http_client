@@ -13,23 +13,13 @@
 #include "util.h"
 
 void test_make_http_request(){
-    struct http_request request;
-    request.type = GET;
-    request.request_line = "index.html";
+    struct http_request *request = create_request(GET,"http://www.gzip.com:9090/api/v3/index.jsp");
 
-    add_param(&request,"pname","NNERO");
-    add_param(&request,"age","13");
-    add_param(&request,"sex","boy");
+    add_param(request,"pname","NNERO");
+    add_param(request,"age","13");
+    add_param(request,"sex","boy");
 
-    add_header(&request,request_header_names[REQUEST_DATE],get_current_time());
-    add_header(&request,request_header_names[REQUEST_ACCEPT],mime_type[JSON]);
-    add_header(&request,request_header_names[REQUEST_ACCEPT_LANGUAGE],language[CHINESE]);
-    add_header(&request,request_header_names[REQUEST_CONNECTION],connection_state[CONNECT_ALIVE]);
-    add_header(&request,request_header_names[REQUEST_HOST],"localhost");
-    add_header(&request,request_header_names[REQUEST_USER_AGENT],"client 1.9.0");
-    add_header(&request,request_header_names[REQUEST_ACCEPT_ENCODING],"gzip");
-
-    char *str = build_http_request(&request);
+    char *str = build_http_request(request);
     printf("%s\n",str);
 }
 
@@ -64,9 +54,9 @@ void test_parse_response(){
 }
 
 int main(){
-//    test_make_http_request();
+    test_make_http_request();
 //    test_split();
-    test_parse_response();
+//    test_parse_response();
     return 0;
 }
 

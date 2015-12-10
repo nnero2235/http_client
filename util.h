@@ -14,4 +14,8 @@ char ** split_str_by_string(char *str,char *symbol);
 
 char ** split_str_by_char(char *str,char symbol);
 
+char ** check_url(char *url);
+
+int get_port(char *url);
+
 #endif //HTTP_CLIENT_UTIL_H
