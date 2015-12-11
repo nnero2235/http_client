@@ -19,10 +19,13 @@ int get_port(char *url){ // :8080/xxdee 这样的字符串
             return atoi(port);
         }
     }
-    return 8080; //没有写端口 默认80端口
+    return 80; //没有写端口 默认80端口
 }
 
 size_t strncpy_index(char *src,size_t index,char *desc,size_t len){
+    if(*desc == NULL){
+        return index;
+    }
     strncpy(&src[index],desc,len);
     return index+len;
 }

@@ -12,6 +12,11 @@
 #include "client.h"
 #include "util.h"
 
+void test_new_call(){
+    struct http_request *request = create_request(GET,"http://www.csdn.com/");
+    Response response = new_call(request);
+}
+
 void test_make_http_request(){
     struct http_request *request = create_request(GET,"http://www.gzip.com:9090/api/v3/index.jsp");
 
@@ -54,7 +59,8 @@ void test_parse_response(){
 }
 
 int main(){
-    test_make_http_request();
+    test_new_call();
+//    test_make_http_request();
 //    test_split();
 //    test_parse_response();
     return 0;

@@ -5,10 +5,29 @@
 #include "client.h"
 #include <netdb.h>
 #include <netinet/in.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <string.h>
+#include <arpa/inet.h>
 
 #define REQUEST_STR_SIZE 2048
+
+//释放整个request
+static void free_request(Request request){
+    while(request->params){
+        free(request->params);
+        request->params = request->params->next;
+    }
+    while(request->headers){
+        free(request->headers);
+        request->headers = request->headers->next;
+    }
+    if(request->host) free(request->host);
+    if(request->entity) free(request->entity);
+    if(request->path) free(request->path);
+    free(request);
+}
 
 //分离实体和响应头,index=0为headers,index=1为entity
 static char ** split_entity_and_headers(char *response){
@@ -30,7 +49,7 @@ static char ** split_entity_and_headers(char *response){
 
 //params
 static size_t build_params(char *str,size_t str_index,struct request_param *params){
-    str[str_index++] = PARAM_SPLIT;
+    if(params) str[str_index++] = PARAM_SPLIT;
     while(params){
         //解析name
         str_index = strncpy_index(str,str_index,params->name,strlen(params->name));
@@ -49,8 +68,10 @@ static size_t build_params(char *str,size_t str_index,struct request_param *para
 static size_t build_request_line(char *str,struct http_request *request){
     size_t str_index=0;
 
-    str_index = strncpy_index(str,str_index,"GET",3);
-    str_index = strncpy_index(str,str_index,request->path,strlen(request->path));
+    str_index = strncpy_index(str,str_index,"GET ",4);
+
+//    if(strcmp(request->path,"/") != 0)
+        str_index = strncpy_index(str,str_index,request->path,strlen(request->path));
 
     str_index = build_params(str,str_index,request->params);
 
@@ -182,22 +203,37 @@ struct http_response * parse_http_response(char *response){
 
 int get_client_socket(char *host,int port){
     int sock_id;
+    size_t len = strlen(host)+1;
+    char *host_temp = malloc(len);
+    int max_try = 5;
+    char ip[32];
     struct sockaddr_in server_addr;
-    struct hostent *hp;
+    struct hostent *hp = NULL;
 
     sock_id = socket(AF_INET,SOCK_STREAM,0);
     if(sock_id == -1){
         p_err("socket");
         return -1;
     }
-
+    strncpy(host_temp,host, len);
+    printf("%s\n",host_temp);
     hp = gethostbyname(host);
+    while(max_try && hp == NULL){ //DNS解析失败
+        p_err_normal("dns error:try again!\n");
+        strncpy(host,host_temp, len);
+        hp = gethostbyname(host);
+        max_try--;
+    }
+    if(hp == NULL){
+        p_err_normal("dns error:can't parse host\n");
+        return -1;
+    }
     bzero(&server_addr, sizeof(struct sockaddr_in));
     bcopy(hp->h_addr,&server_addr.sin_addr,hp->h_length);
     server_addr.sin_port = htons(port);
     server_addr.sin_family = AF_INET;
 
-    printf("Trying connect to %s:%d\n",host,port);
+    printf("Trying connect to %s:%d\n",inet_ntop(hp->h_addrtype,hp->h_addr,ip, sizeof(ip)),port);
 
     if(connect(sock_id,(struct sockaddr *)&server_addr, sizeof(server_addr)) != 0) {
         p_err("connect");
@@ -216,15 +252,49 @@ Request create_request(Request_type type,char *url){
     request->host = temp[0];
     request->path = temp[1];
     request->port = get_port(request->host);
+    request->headers = NULL;
+    request->params = NULL;
+    request->entity = NULL;
     add_header(request,request_header_names[REQUEST_DATE],get_current_time());
-    add_header(request,request_header_names[REQUEST_ACCEPT],mime_type[JSON]);
+    add_header(request,request_header_names[REQUEST_ACCEPT],mime_type[HTML]);
     add_header(request,request_header_names[REQUEST_ACCEPT_LANGUAGE],language[CHINESE]);
     add_header(request,request_header_names[REQUEST_CONNECTION],connection_state[CONNECT_ALIVE]);
-    add_header(request,request_header_names[REQUEST_HOST],"NNERO.mac");
-    add_header(request,request_header_names[REQUEST_USER_AGENT],"CLIENT 1.0.0");
+    add_header(request,request_header_names[REQUEST_HOST],"www.csdn.com");
+    add_header(request,request_header_names[REQUEST_USER_AGENT],"Mozilla/5.0 (Windows NT 6.1; WOW64; rv:34.0) Gecko/20100101 Firefox/34.0");
     add_header(request,request_header_names[REQUEST_ACCEPT_ENCODING],"gzip");
-
+    free(*temp);
     return request;
+}
+
+char * get_entity(Response response){
+    return response->entity;
+}
+
+Response new_call(Request request){
+    int sock_id;
+    char buf[BUFSIZ];
+    sock_id = get_client_socket(request->host,request->port); //connect
+    if(sock_id == -1) {
+        p_err_normal("connect fail! sock_id = -1\n");
+        exit(1);
+    }
+    char *msg = build_http_request(request);
+//    printf("%s\n",msg);
+//    char *msg = "GET/ HTTP/1.1\nHost:www.csdn.com\n\r\n";
+    ssize_t len = write(sock_id,msg,strlen(msg)); //char 是1字符
+    if(len == -1){
+        p_err("send");
+        exit(1);
+    }
+    printf("%d\n",len);
+    len = read(sock_id,buf, sizeof(buf)-2);
+    buf[len-1] = '\0';
+    printf("%d\n",len);
+    printf("%s\n",buf);
+    close(sock_id);
+    free(msg);
+    free_request(request);
+    return NULL;
 }
 
 

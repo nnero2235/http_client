@@ -20,6 +20,7 @@ void add_param(struct http_request *request,char *name,char *value);
 
 void add_header(struct http_request *request,char *name,char *value);
 
+//以下3个方法考虑private
 int get_client_socket(char *host,int port);/*返回-1 表示错误 正确返回sock_id*/
 
 char * build_http_request(struct http_request *request); /*将request 转为string*/
