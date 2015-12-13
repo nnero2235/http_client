@@ -22,13 +22,18 @@ char *mime_type[] = {
         "video/mpeg"
 };
 
+char *char_set[] = {
+        "gbk",
+        "utf-8"
+};
+
 char *language[] ={
-        "zh-cn"
+        "zh-CN,zh"
 };
 
 char *connection_state[] ={
-        "Keep-Alive",
-        "Close"
+        "keep-alive",
+        "close"
 };
 
 char *request_header_names[]={
@@ -38,7 +43,8 @@ char *request_header_names[]={
         "Connection",
         "Host",
         "User-Agent",
-        "Accept-encoding"
+        "Accept-Encoding",
+        "Accept-Charset"
 };
 
 char *response_header_names[]={

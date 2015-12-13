@@ -29,11 +29,17 @@ static void free_request(Request request){
     free(request);
 }
 
+
+static size_t build_http_entity(char *str,char *entity){
+    //TODO:
+    return 0;
+}
+
 //分离实体和响应头,index=0为headers,index=1为entity
 static char ** split_entity_and_headers(char *response){
     char **temp = malloc(2 * sizeof(char*));
     for(int i=0;i<strlen(response);i++){
-        if(response[i] == '\n' && response[i+1] == '\n'){
+        if(response[i] == '\n' && response[i+1] == '\r' && response[i+2] == '\n'){
             char *entity = malloc(strlen(&response[i+2])* sizeof(char));
             char *headers = malloc((i+1)* sizeof(char));
             strncpy(headers,response,i);
@@ -45,6 +51,7 @@ static char ** split_entity_and_headers(char *response){
             return temp;
         }
     }
+    return NULL;
 }
 
 //params
@@ -71,7 +78,7 @@ static size_t build_request_line(char *str,struct http_request *request){
     str_index = strncpy_index(str,str_index,"GET ",4);
 
 //    if(strcmp(request->path,"/") != 0)
-        str_index = strncpy_index(str,str_index,request->path,strlen(request->path));
+    str_index = strncpy_index(str,str_index,request->path,strlen(request->path));
 
     str_index = build_params(str,str_index,request->params);
 
@@ -101,7 +108,8 @@ static size_t build_http_headers(char *str,struct request_header *headers){
         str[str_index++] = '\n';
         headers = headers->next;
     }
-
+    str[str_index++] = '\r';
+    str[str_index++] = '\n';
     return str_index;
 }
 
@@ -158,6 +166,7 @@ char * build_http_request(struct http_request *request){
         //TODO: support POST
     }
     str_index += build_http_headers(&str[str_index],request->headers);
+//    str_index += build_http_entity(&str[str_index],request->entity);
     str[str_index] = '\0';
     //str_index is not used anymore.  this is just reuse
     str_index = strlen(str);
@@ -185,15 +194,15 @@ struct http_response * parse_http_response(char *response){
     while(strs[index]){
         strs_temp = split_str_by_char(strs[index],':');
 
-        if(strcmp(response_header_names[RESPONSE_SERVER],*strs_temp) == 0){
-            http_rep->server = *(strs_temp+1);
-        } else if(strcmp(response_header_names[RESPONSE_DATE],*strs_temp) == 0){
-            http_rep->date = *(strs_temp+1);
-        } else if(strcmp(response_header_names[RESPONSE_CONTENT_TYPE],*strs_temp) == 0){
-            http_rep->content_type = *(strs_temp+1);
-        } else if(strcmp(response_header_names[RESPONSE_CONTENT_LENGTH],*strs_temp) == 0){
-            http_rep->content_length = atoi(*(strs_temp+1));
-        }
+//        if(strcmp(response_header_names[RESPONSE_SERVER],*strs_temp) == 0){
+//            http_rep->server = *(strs_temp+1);
+//        } else if(strcmp(response_header_names[RESPONSE_DATE],*strs_temp) == 0){
+//            http_rep->date = *(strs_temp+1);
+//        } else if(strcmp(response_header_names[RESPONSE_CONTENT_TYPE],*strs_temp) == 0){
+//            http_rep->content_type = *(strs_temp+1);
+//        } else if(strcmp(response_header_names[RESPONSE_CONTENT_LENGTH],*strs_temp) == 0){
+//            http_rep->content_length = atoi(*(strs_temp+1));
+//        }
 
         index++;
     }
@@ -201,7 +210,9 @@ struct http_response * parse_http_response(char *response){
     return http_rep;
 }
 
-int get_client_socket(char *host,int port){
+char *combine_mime_and_charset(char *mime_type, char *char_set);
+
+int get_client_socket(char *host, int port){
     int sock_id;
     size_t len = strlen(host)+1;
     char *host_temp = malloc(len);
@@ -257,11 +268,12 @@ Request create_request(Request_type type,char *url){
     request->entity = NULL;
     add_header(request,request_header_names[REQUEST_DATE],get_current_time());
     add_header(request,request_header_names[REQUEST_ACCEPT],mime_type[HTML]);
+    add_header(request,request_header_names[REQUEST_ACCEPT_CHARSET],char_set[UTF8]);
     add_header(request,request_header_names[REQUEST_ACCEPT_LANGUAGE],language[CHINESE]);
     add_header(request,request_header_names[REQUEST_CONNECTION],connection_state[CONNECT_ALIVE]);
-    add_header(request,request_header_names[REQUEST_HOST],"www.csdn.com");
-    add_header(request,request_header_names[REQUEST_USER_AGENT],"Mozilla/5.0 (Windows NT 6.1; WOW64; rv:34.0) Gecko/20100101 Firefox/34.0");
-    add_header(request,request_header_names[REQUEST_ACCEPT_ENCODING],"gzip");
+    add_header(request,request_header_names[REQUEST_HOST],request->host);
+    add_header(request,request_header_names[REQUEST_USER_AGENT],"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36");
+    add_header(request,request_header_names[REQUEST_ACCEPT_ENCODING],"gzip,deflate");
     free(*temp);
     return request;
 }
@@ -279,18 +291,17 @@ Response new_call(Request request){
         exit(1);
     }
     char *msg = build_http_request(request);
-//    printf("%s\n",msg);
-//    char *msg = "GET/ HTTP/1.1\nHost:www.csdn.com\n\r\n";
+    printf("%s\n",msg);
     ssize_t len = write(sock_id,msg,strlen(msg)); //char 是1字符
     if(len == -1){
         p_err("send");
         exit(1);
     }
-    printf("%d\n",len);
-    len = read(sock_id,buf, sizeof(buf)-2);
-    buf[len-1] = '\0';
-    printf("%d\n",len);
-    printf("%s\n",buf);
+//    printf("%zd\n",len);
+    if ((len = read(sock_id,buf, sizeof(buf)-2)) != EOF){
+        buf[len-1] = '\0';
+        printf("%s\n",buf);
+    }
     close(sock_id);
     free(msg);
     free_request(request);

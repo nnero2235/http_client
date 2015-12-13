@@ -45,6 +45,7 @@
 #define REQUEST_HOST 4
 #define REQUEST_USER_AGENT 5
 #define REQUEST_ACCEPT_ENCODING 6
+#define REQUEST_ACCEPT_CHARSET 7
 
 //language
 #define CHINESE 0
@@ -53,8 +54,14 @@
 #define CONNECT_ALIVE 0
 #define CONNECT_CLOSE 1
 
+//charset
+#define GBK 0
+#define UTF8 1
+
 
 extern char *mime_type[];
+
+extern char *char_set[];
 
 extern char *language[];
 
@@ -103,10 +110,8 @@ struct http_request{
 
 struct http_response{
     int state_code;
-    char *server;
-    char *date;
-    char *content_type;
     int content_length;
+    struct response_header* response_headers;
     char *entity; /*暂时只支持文本*/
 };
 
@@ -121,6 +126,12 @@ struct request_header{
     char *name;
     char *value;
     struct request_header *next;
+};
+
+struct response_header{
+    char *name;
+    char *value;
+    struct response_header *next;
 };
 
 char* get_current_time();//获取当前时间

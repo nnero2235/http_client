@@ -13,8 +13,19 @@
 #include "util.h"
 
 void test_new_call(){
-    struct http_request *request = create_request(GET,"http://www.csdn.com/");
+    struct http_request *request = create_request(GET,"http://www.163.com/");
     Response response = new_call(request);
+    printf("%d\n",response->state_code);
+    printf("%d\n",response->content_length);
+    printf("%s\n",response->entity);
+}
+
+void test_multi_call(){
+    char ch;
+    while(getchar()){
+        Request request = create_request(GET,"http://www.163.com/");
+        Response response = new_call(request);
+    }
 }
 
 void test_make_http_request(){
@@ -50,15 +61,13 @@ void test_parse_response(){
             "\n"
             "{\"url\":\"www.baidu.com\",\"id\":\"1001\"}";
     struct http_response *response_1 = parse_http_response(response);
-    printf("%s\n",response_1->server);
-    printf("%s\n",response_1->date);
     printf("%d\n",response_1->state_code);
-    printf("%s\n",response_1->content_type);
     printf("%d\n",response_1->content_length);
     printf("%s\n",response_1->entity);
 }
 
 int main(){
+//    test_multi_call();
     test_new_call();
 //    test_make_http_request();
 //    test_split();
