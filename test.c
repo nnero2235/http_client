@@ -12,12 +12,27 @@
 #include "client.h"
 #include "util.h"
 
+void test_split_string(){
+    char *str = "nnero\r\nfetch news\r\nhttp:www.173.com\r\n\r\n{jjs:nnero,sdsd:ssss}\nssad\rsss";
+    char **strs = split_str_by_string(str,"\r\n");
+    int index = 0;
+    while(strs[index]) {
+        printf("%s\n", strs[index]);
+        index++;
+    }
+}
+
 void test_new_call(){
     struct http_request *request = create_request(GET,"http://www.163.com/");
     Response response = new_call(request);
     printf("%d\n",response->state_code);
     printf("%d\n",response->content_length);
     printf("%s\n",response->entity);
+    struct response_header *temp = response->response_headers;
+    while(temp){
+        printf("%s--->%s\n",temp->name,temp->value);
+        temp = response->response_headers->next;
+    }
 }
 
 void test_multi_call(){
@@ -71,6 +86,7 @@ int main(){
     test_new_call();
 //    test_make_http_request();
 //    test_split();
+//    test_split_string();
 //    test_parse_response();
     return 0;
 }

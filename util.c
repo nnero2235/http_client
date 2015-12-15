@@ -30,6 +30,41 @@ size_t strncpy_index(char *src,size_t index,char *desc,size_t len){
     return index+len;
 }
 
+char ** split_str_by_string(char *str,char *symbol){
+    int index = 0;
+    int start = 0;
+    int end = 0;
+    size_t sym_len = strlen(symbol);
+    size_t len = strlen(str);
+    char *temp = strstr(str,symbol);
+    while (temp){
+        end = (int)(temp-str);
+        if(end == start) { //跳过 相邻的 相同symbol
+            start = end + sym_len;
+            temp = strstr(&str[start],symbol);
+            continue;
+        }
+        char *s = malloc((end-start+1)* sizeof(char)); //char 1个字节
+        strncpy(s,&str[start],(end-start));
+        s[end-start] = '\0';
+        strs_buffer[index++] = s;
+        start = end+sym_len;
+        temp = strstr(&str[start],symbol);
+    };
+    //追加最后一个字符串
+    char *s = malloc((len-start+1) * sizeof(char));
+    strncpy(s,&str[start],(len-start));
+    s[len-start] = '\0';
+    strs_buffer[index++] = s;
+
+    char **strs = malloc(index * sizeof(char *));
+    for(int i=0;i<index;i++){
+        strs[i] = strs_buffer[i];
+    }
+    strs[index] = NULL;
+    return strs;
+}
+
 char ** split_str_by_char(char *str,char symbol){
     int index = 0;
     int start = 0;

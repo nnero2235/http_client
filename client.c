@@ -23,7 +23,7 @@ static void free_request(Request request){
         free(request->headers);
         request->headers = request->headers->next;
     }
-    if(request->host) free(request->host);
+//    if(request->host) free(request->host);
     if(request->entity) free(request->entity);
     if(request->path) free(request->path);
     free(request);
@@ -89,7 +89,8 @@ static size_t build_request_line(char *str,struct http_request *request){
     str[str_index++] = '\n';
     return str_index;
 }
-//headers
+
+//request headers
 static size_t build_http_headers(char *str,struct request_header *headers){
     size_t str_index = 0;
     size_t len = 0;
@@ -154,6 +155,27 @@ void add_header(struct http_request *request,char *name,char *value){
         }
     }
 }
+//response headers
+void parse_response_headers(struct http_response *response,char *name,char *value){
+    struct response_header *header = malloc(sizeof(struct response_header));
+    struct response_header *header_point = response->response_headers;
+    header->name = name;
+    header->value = value;
+    header->next = NULL;
+
+    if(header_point == NULL){
+        response->response_headers = header;
+        return;
+    }
+
+    for(;;response->response_headers = response->response_headers->next){
+        if(response->response_headers->next == NULL){
+            response->response_headers->next = header;
+            response->response_headers = header_point;
+            return;
+        }
+    }
+}
 
 char * build_http_request(struct http_request *request){
     char str[REQUEST_STR_SIZE]; /*request str:就是一个用\n分割的 大字符串*/
@@ -180,8 +202,8 @@ struct http_response * parse_http_response(char *response){
     char **temp = split_entity_and_headers(response);
     char *headers = temp[0];
     char *entity = temp[1];
-    char **strs = split_str_by_char(headers,'\n');
-    char **strs_temp;
+    char **strs = split_str_by_string(headers,"\r\n");
+    char **strs_temp = NULL;
     int index = 1; //从第二行开始解析
 
     char *state_code = malloc(4 * sizeof(char));
@@ -190,27 +212,21 @@ struct http_response * parse_http_response(char *response){
     state_code[2] = (*strs)[11];
     state_code[3] = '\0';
     http_rep->state_code = atoi(state_code);
+    http_rep->response_headers = NULL;
 
     while(strs[index]){
         strs_temp = split_str_by_char(strs[index],':');
 
-//        if(strcmp(response_header_names[RESPONSE_SERVER],*strs_temp) == 0){
-//            http_rep->server = *(strs_temp+1);
-//        } else if(strcmp(response_header_names[RESPONSE_DATE],*strs_temp) == 0){
-//            http_rep->date = *(strs_temp+1);
-//        } else if(strcmp(response_header_names[RESPONSE_CONTENT_TYPE],*strs_temp) == 0){
-//            http_rep->content_type = *(strs_temp+1);
-//        } else if(strcmp(response_header_names[RESPONSE_CONTENT_LENGTH],*strs_temp) == 0){
-//            http_rep->content_length = atoi(*(strs_temp+1));
-//        }
-
+        if(strcmp(response_header_names[RESPONSE_CONTENT_LENGTH],*strs_temp) == 0){
+            http_rep->content_length = atoi(*(strs_temp+1));
+        } else {
+            parse_response_headers(http_rep,strs_temp[0],strs_temp[1]);
+        }
         index++;
     }
     http_rep->entity = entity;
     return http_rep;
 }
-
-char *combine_mime_and_charset(char *mime_type, char *char_set);
 
 int get_client_socket(char *host, int port){
     int sock_id;
@@ -305,7 +321,7 @@ Response new_call(Request request){
     close(sock_id);
     free(msg);
     free_request(request);
-    return NULL;
+    return parse_http_response(buf);
 }
 
 
