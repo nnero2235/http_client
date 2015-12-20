@@ -215,12 +215,14 @@ struct http_response * parse_http_response(char *response){
     http_rep->response_headers = NULL;
 
     while(strs[index]){
-        strs_temp = split_str_by_char(strs[index],':');
+        strs_temp = split_n_str_by_char(strs[index],':',1);
 
-        if(strcmp(response_header_names[RESPONSE_CONTENT_LENGTH],*strs_temp) == 0){
-            http_rep->content_length = atoi(*(strs_temp+1));
-        } else {
-            parse_response_headers(http_rep,strs_temp[0],strs_temp[1]);
+        if(strs_temp != NULL){
+            if(strcmp(response_header_names[RESPONSE_CONTENT_LENGTH],*strs_temp) == 0){
+                http_rep->content_length = atoi(*(strs_temp+1));
+            } else {
+                parse_response_headers(http_rep,strs_temp[0],strs_temp[1]);
+            }
         }
         index++;
     }
@@ -231,7 +233,7 @@ struct http_response * parse_http_response(char *response){
 int get_client_socket(char *host, int port){
     int sock_id;
     size_t len = strlen(host)+1;
-    char *host_temp = malloc(len);
+    char *host_temp = malloc(len * sizeof(char));
     int max_try = 5;
     char ip[32];
     struct sockaddr_in server_addr;

@@ -1,5 +1,5 @@
 //
-// Created by apple on 15/12/8.
+// Created by nnero on 15/12/8.
 //
 
 #include "util.h"
@@ -10,7 +10,7 @@
 
 char *strs_buffer[MAX_STRS];
 
-int get_port(char *url){ // :8080/xxdee 这样的字符串
+int get_port(const char *url){ // :8080/xxdee 这样的字符串
     for(int i=0;i<7;i++){ //最多只要判断7次 因为端口最大65535
         if(url[i] == '/'){
             char *port = malloc((i)* sizeof(char)); //\0 needed
@@ -22,15 +22,15 @@ int get_port(char *url){ // :8080/xxdee 这样的字符串
     return 80; //没有写端口 默认80端口
 }
 
-size_t strncpy_index(char *src,size_t index,char *desc,size_t len){
-    if(desc == NULL){
+size_t strncpy_index(char *dest,size_t index,const char *src,size_t len){
+    if(src == NULL){
         return index;
     }
-    strncpy(&src[index],desc,len);
+    strncpy(&dest[index],src,len);
     return index+len;
 }
 
-char ** split_str_by_string(char *str,char *symbol){
+char ** split_str_by_string(const char *str,const char *symbol){
     int index = 0;
     int start = 0;
     int end = 0;
@@ -57,6 +57,40 @@ char ** split_str_by_string(char *str,char *symbol){
     s[len-start] = '\0';
     strs_buffer[index++] = s;
 
+    char **strs = malloc((index+1) * sizeof(char *));
+    for(int i=0;i<index;i++){
+        strs[i] = strs_buffer[i];
+    }
+    strs[index] = NULL;
+    return strs;
+}
+
+char ** split_n_str_by_char(const char *str,const char symbol,unsigned int n){
+    if(str == NULL || str[0] == '\0'){
+        return NULL;
+    }
+    int index = 0;
+    int times = 0;
+    int start = 0;
+    int end = 0;
+    size_t len = strlen(str);
+    for(int i=0;i<len;i++){
+        if(str[i] == symbol){
+            end = i;
+            char *s = malloc((end-start) * sizeof(char));
+            strncpy(s,&str[start],(end-start));
+            strs_buffer[index++] = s;
+            start = i+1;
+            if(++times == n){
+                break;
+            }
+        }
+    }
+    //追加最后一个字符串
+    char *s = malloc((len-start) * sizeof(char));
+    strncpy(s,&str[start],(len-start));
+    strs_buffer[index++] = s;
+
     char **strs = malloc(index * sizeof(char *));
     for(int i=0;i<index;i++){
         strs[i] = strs_buffer[i];
@@ -65,7 +99,7 @@ char ** split_str_by_string(char *str,char *symbol){
     return strs;
 }
 
-char ** split_str_by_char(char *str,char symbol){
+char ** split_str_by_char(const char *str,char symbol){
     int index = 0;
     int start = 0;
     int end = 0;
@@ -93,7 +127,7 @@ char ** split_str_by_char(char *str,char symbol){
 }
 
 //检查url是否合法,合法返回 host  不合法返回null
-char** check_url(char *url){
+char** check_url(const char *url){
     size_t len = strlen(url);
     char **temp = malloc(2* sizeof(char *));
     if(len > 7 && strstr(url,"http://")) { //http://开头才是合法的

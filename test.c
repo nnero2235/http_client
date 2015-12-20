@@ -22,6 +22,16 @@ void test_split_string(){
     }
 }
 
+void test_split_n_char(){
+    char *str = "nnero:dsasda 9:9:9 adasd:sss";
+    char **strs = split_n_str_by_char(str,':',2);
+    int index = 0;
+    while(strs[index]) {
+        printf("%s\n", strs[index]);
+        index++;
+    }
+}
+
 void test_new_call(){
     struct http_request *request = create_request(GET,"http://www.163.com/");
     Response response = new_call(request);
@@ -31,7 +41,7 @@ void test_new_call(){
     struct response_header *temp = response->response_headers;
     while(temp){
         printf("%s--->%s\n",temp->name,temp->value);
-        temp = response->response_headers->next;
+        temp = temp->next;
     }
 }
 
@@ -82,6 +92,7 @@ void test_parse_response(){
 }
 
 int main(){
+//    test_split_n_char();
 //    test_multi_call();
     test_new_call();
 //    test_make_http_request();
